@@ -19,6 +19,8 @@ func (User) Fields() []ent.Field {
 		field.String("email"),
 		field.String("phone_number"),
 		field.String("password"),
+		field.Time("created_at"),
+		field.Time("updated_at"),
 	}
 }
 
