@@ -200,3 +200,41 @@ func TestUserRepository_DeleteUser(t *testing.T) {
 		})
 	}
 }
+
+func TestUserRepository_UpdatedUser(t *testing.T) {
+	opts := []enttest.Option{
+		enttest.WithOptions(ent.Log(t.Log)),
+	}
+	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1", opts...)
+	defer client.Close()
+
+	userRepo := NewUserRepository(client)
+
+	user := []dto.User{
+		{
+			ID:          1,
+			FirstName:   "veli",
+			LastName:    "ulugut",
+			UserName:    "testUser",
+			Email:       "test@user.com",
+			PhoneNumber: "222 222",
+			Password:    "123123",
+			CreateAt:    time.Now(),
+			UpdateAt:    time.Now(),
+		},
+	}
+
+	for i := range user {
+		t.Run(fmt.Sprintf("CreateUser_Index:%d", user[i].ID), func(t *testing.T) {
+			if err := userRepo.CreateUser(context.Background(), &user[i]); err != nil {
+				t.Error(err)
+			}
+		})
+
+		t.Run(fmt.Sprintf("DeleteUser_Index:%d", user[i].ID), func(t *testing.T) {
+			if err := userRepo.DeleteUser(context.Background(), 1); err != nil {
+				t.Error(err)
+			}
+		})
+	}
+}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"rent-a-car/ent"
 	"rent-a-car/pkg/repository/dto"
-	"rent-a-car/pkg/repository/helper"
+	"rent-a-car/pkg/repository/entadp/helper"
 	"time"
 )
 
@@ -55,4 +55,24 @@ func (u *UserRepository) GetUserByID(ctx context.Context, id int) (*dto.User, er
 	}
 
 	return helper.DbUserToDTO(dbUser), nil
+}
+
+func (u *UserRepository) UpdatedUser(ctx context.Context, id int, c *dto.User) error {
+	_, err := u.DbClient.User.UpdateOneID(id).
+		SetEmail(c.Email).
+		SetPassword(c.Password).
+		SetPhoneNumber(c.PhoneNumber).
+		SetUsername(c.UserName).
+		SetFirstName(c.FirstName).
+		SetLastName(c.LastName).
+		SetUpdatedAt(c.UpdateAt).
+		Save(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return fmt.Errorf("entadp user / get updated user :%w", ErrorIsNotFound)
+		}
+		return fmt.Errorf("entadp user / updated user :%w", err)
+	}
+
+	return nil
 }
