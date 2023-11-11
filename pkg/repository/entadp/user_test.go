@@ -2,8 +2,10 @@ package entadp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
+	"reflect"
 	"rent-a-car/ent"
 	"rent-a-car/ent/enttest"
 	"rent-a-car/pkg/repository/dto"
@@ -87,4 +89,77 @@ func TestUserRepository_CreateUser(t *testing.T) {
 
 		})
 	})*/
+}
+
+func TestUserRepository_GetUserByID(t *testing.T) {
+	opts := []enttest.Option{
+		enttest.WithOptions(ent.Log(t.Log)),
+	}
+	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&_fk=1", opts...)
+	defer client.Close()
+
+	userRepo := NewUserRepository(client)
+
+	tests := []struct {
+		name         string
+		setup        func() (*ent.User, error)
+		id           int
+		expectedUser *dto.User
+		expectedErr  error
+	}{
+		{
+			name: "pass",
+			setup: func() (*ent.User, error) {
+				return client.User.Create().
+					SetUsername("veli").
+					SetFirstName("test").
+					SetLastName("ulugut").
+					SetEmail("test@mail.com").
+					SetPassword("555 555 555").
+					SetPhoneNumber("555 555 555").
+					SetCreatedAt(time.Now()).
+					SetUpdatedAt(time.Now()).
+					Save(context.Background())
+			},
+			id: 1,
+			expectedUser: &dto.User{
+				ID:          1,
+				FirstName:   "test",
+				LastName:    "ulugut",
+				UserName:    "veli",
+				Email:       "test@mail.com",
+				PhoneNumber: "555 555 555",
+				Password:    "555 555 555",
+			},
+			expectedErr: nil,
+		},
+		{
+			name:         "user not found",
+			setup:        func() (*ent.User, error) { return nil, nil },
+			id:           31,
+			expectedUser: nil,
+			expectedErr:  ErrorIsNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup
+			_, setupErr := tt.setup()
+			if setupErr != nil {
+				t.Fatalf("Setup error: %v", setupErr)
+			}
+
+			// Test
+			resultUser, err := userRepo.GetUserByID(context.Background(), tt.id)
+
+			if !reflect.DeepEqual(resultUser, tt.expectedUser) {
+				t.Errorf("Expected user: %+v, but got: %+v", tt.expectedUser, resultUser)
+			}
+
+			if !errors.Is(err, tt.expectedErr) {
+				t.Errorf("Expected error: %v, but got: %v", tt.expectedErr, err)
+			}
+		})
+	}
 }

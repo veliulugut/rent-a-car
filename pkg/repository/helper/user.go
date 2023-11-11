@@ -15,5 +15,6 @@ func DbUserToDTO(d *ent.User) *dto.User {
 		Password:    d.Password,
 		CreateAt:    d.CreatedAt,
 		UpdateAt:    d.UpdatedAt,
+		ID:          d.ID,
 	}
 }
