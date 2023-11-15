@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"rent-a-car/ent/car"
 	"rent-a-car/ent/predicate"
 	"rent-a-car/ent/user"
 	"sync"
@@ -24,8 +25,659 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeCar  = "Car"
 	TypeUser = "User"
 )
+
+// CarMutation represents an operation that mutates the Car nodes in the graph.
+type CarMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	car_name         *string
+	miles_per_gallon *string
+	cylinders        *string
+	power            *string
+	year             *string
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Car, error)
+	predicates       []predicate.Car
+}
+
+var _ ent.Mutation = (*CarMutation)(nil)
+
+// carOption allows management of the mutation configuration using functional options.
+type carOption func(*CarMutation)
+
+// newCarMutation creates new mutation for the Car entity.
+func newCarMutation(c config, op Op, opts ...carOption) *CarMutation {
+	m := &CarMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCar,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCarID sets the ID field of the mutation.
+func withCarID(id int) carOption {
+	return func(m *CarMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Car
+		)
+		m.oldValue = func(ctx context.Context) (*Car, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Car.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCar sets the old Car of the mutation.
+func withCar(node *Car) carOption {
+	return func(m *CarMutation) {
+		m.oldValue = func(context.Context) (*Car, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CarMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CarMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CarMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CarMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Car.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCarName sets the "car_name" field.
+func (m *CarMutation) SetCarName(s string) {
+	m.car_name = &s
+}
+
+// CarName returns the value of the "car_name" field in the mutation.
+func (m *CarMutation) CarName() (r string, exists bool) {
+	v := m.car_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCarName returns the old "car_name" field's value of the Car entity.
+// If the Car object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CarMutation) OldCarName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCarName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCarName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCarName: %w", err)
+	}
+	return oldValue.CarName, nil
+}
+
+// ResetCarName resets all changes to the "car_name" field.
+func (m *CarMutation) ResetCarName() {
+	m.car_name = nil
+}
+
+// SetMilesPerGallon sets the "miles_per_gallon" field.
+func (m *CarMutation) SetMilesPerGallon(s string) {
+	m.miles_per_gallon = &s
+}
+
+// MilesPerGallon returns the value of the "miles_per_gallon" field in the mutation.
+func (m *CarMutation) MilesPerGallon() (r string, exists bool) {
+	v := m.miles_per_gallon
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMilesPerGallon returns the old "miles_per_gallon" field's value of the Car entity.
+// If the Car object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CarMutation) OldMilesPerGallon(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMilesPerGallon is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMilesPerGallon requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMilesPerGallon: %w", err)
+	}
+	return oldValue.MilesPerGallon, nil
+}
+
+// ResetMilesPerGallon resets all changes to the "miles_per_gallon" field.
+func (m *CarMutation) ResetMilesPerGallon() {
+	m.miles_per_gallon = nil
+}
+
+// SetCylinders sets the "cylinders" field.
+func (m *CarMutation) SetCylinders(s string) {
+	m.cylinders = &s
+}
+
+// Cylinders returns the value of the "cylinders" field in the mutation.
+func (m *CarMutation) Cylinders() (r string, exists bool) {
+	v := m.cylinders
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCylinders returns the old "cylinders" field's value of the Car entity.
+// If the Car object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CarMutation) OldCylinders(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCylinders is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCylinders requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCylinders: %w", err)
+	}
+	return oldValue.Cylinders, nil
+}
+
+// ResetCylinders resets all changes to the "cylinders" field.
+func (m *CarMutation) ResetCylinders() {
+	m.cylinders = nil
+}
+
+// SetPower sets the "power" field.
+func (m *CarMutation) SetPower(s string) {
+	m.power = &s
+}
+
+// Power returns the value of the "power" field in the mutation.
+func (m *CarMutation) Power() (r string, exists bool) {
+	v := m.power
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPower returns the old "power" field's value of the Car entity.
+// If the Car object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CarMutation) OldPower(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPower is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPower requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPower: %w", err)
+	}
+	return oldValue.Power, nil
+}
+
+// ResetPower resets all changes to the "power" field.
+func (m *CarMutation) ResetPower() {
+	m.power = nil
+}
+
+// SetYear sets the "year" field.
+func (m *CarMutation) SetYear(s string) {
+	m.year = &s
+}
+
+// Year returns the value of the "year" field in the mutation.
+func (m *CarMutation) Year() (r string, exists bool) {
+	v := m.year
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldYear returns the old "year" field's value of the Car entity.
+// If the Car object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CarMutation) OldYear(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldYear is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldYear requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldYear: %w", err)
+	}
+	return oldValue.Year, nil
+}
+
+// ResetYear resets all changes to the "year" field.
+func (m *CarMutation) ResetYear() {
+	m.year = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *CarMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *CarMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Car entity.
+// If the Car object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CarMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *CarMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *CarMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *CarMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Car entity.
+// If the Car object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CarMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *CarMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the CarMutation builder.
+func (m *CarMutation) Where(ps ...predicate.Car) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CarMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CarMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Car, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CarMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CarMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Car).
+func (m *CarMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CarMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.car_name != nil {
+		fields = append(fields, car.FieldCarName)
+	}
+	if m.miles_per_gallon != nil {
+		fields = append(fields, car.FieldMilesPerGallon)
+	}
+	if m.cylinders != nil {
+		fields = append(fields, car.FieldCylinders)
+	}
+	if m.power != nil {
+		fields = append(fields, car.FieldPower)
+	}
+	if m.year != nil {
+		fields = append(fields, car.FieldYear)
+	}
+	if m.created_at != nil {
+		fields = append(fields, car.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, car.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CarMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case car.FieldCarName:
+		return m.CarName()
+	case car.FieldMilesPerGallon:
+		return m.MilesPerGallon()
+	case car.FieldCylinders:
+		return m.Cylinders()
+	case car.FieldPower:
+		return m.Power()
+	case car.FieldYear:
+		return m.Year()
+	case car.FieldCreatedAt:
+		return m.CreatedAt()
+	case car.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CarMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case car.FieldCarName:
+		return m.OldCarName(ctx)
+	case car.FieldMilesPerGallon:
+		return m.OldMilesPerGallon(ctx)
+	case car.FieldCylinders:
+		return m.OldCylinders(ctx)
+	case car.FieldPower:
+		return m.OldPower(ctx)
+	case car.FieldYear:
+		return m.OldYear(ctx)
+	case car.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case car.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Car field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CarMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case car.FieldCarName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCarName(v)
+		return nil
+	case car.FieldMilesPerGallon:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMilesPerGallon(v)
+		return nil
+	case car.FieldCylinders:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCylinders(v)
+		return nil
+	case car.FieldPower:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPower(v)
+		return nil
+	case car.FieldYear:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetYear(v)
+		return nil
+	case car.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case car.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Car field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CarMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CarMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CarMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Car numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CarMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CarMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CarMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Car nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CarMutation) ResetField(name string) error {
+	switch name {
+	case car.FieldCarName:
+		m.ResetCarName()
+		return nil
+	case car.FieldMilesPerGallon:
+		m.ResetMilesPerGallon()
+		return nil
+	case car.FieldCylinders:
+		m.ResetCylinders()
+		return nil
+	case car.FieldPower:
+		m.ResetPower()
+		return nil
+	case car.FieldYear:
+		m.ResetYear()
+		return nil
+	case car.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case car.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Car field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CarMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CarMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CarMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CarMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CarMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CarMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CarMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Car unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CarMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Car edge %s", name)
+}
 
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {

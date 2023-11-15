@@ -210,31 +210,49 @@ func TestUserRepository_UpdatedUser(t *testing.T) {
 
 	userRepo := NewUserRepository(client)
 
-	user := []dto.User{
+	_, err := userRepo.DbClient.User.Create().SetUsername("veli").SetLastName("ulugut").
+		SetFirstName("tesdfg").
+		SetEmail("test@mail.com").SetPassword("111 111").SetPhoneNumber("555 555").
+		SetCreatedAt(time.Now()).
+		SetUpdatedAt(time.Now()).Save(context.Background())
+	if err != nil {
+		t.Error(err)
+	}
+
+	userUpdate := dto.UserUpdate{
+		FirstName:   "tests",
+		LastName:    "tests",
+		UserName:    "tests",
+		Email:       "test@mail.com",
+		Password:    "1234567",
+		UpdateAt:    time.Now(),
+		PhoneNumber: "555 555",
+	}
+
+	test := []struct {
+		title     string
+		id        int
+		expectErr error
+	}{
 		{
-			ID:          1,
-			FirstName:   "veli",
-			LastName:    "ulugut",
-			UserName:    "testUser",
-			Email:       "test@user.com",
-			PhoneNumber: "222 222",
-			Password:    "123123",
-			CreateAt:    time.Now(),
-			UpdateAt:    time.Now(),
+			title:     "pass",
+			id:        2,
+			expectErr: nil,
+		},
+		{
+			title:     "did not pass",
+			id:        31,
+			expectErr: ErrorIsNotFound,
 		},
 	}
 
-	for i := range user {
-		t.Run(fmt.Sprintf("CreateUser_Index:%d", user[i].ID), func(t *testing.T) {
-			if err := userRepo.CreateUser(context.Background(), &user[i]); err != nil {
-				t.Error(err)
-			}
-		})
-
-		t.Run(fmt.Sprintf("DeleteUser_Index:%d", user[i].ID), func(t *testing.T) {
-			if err := userRepo.DeleteUser(context.Background(), 1); err != nil {
-				t.Error(err)
+	for _, tt := range test {
+		t.Run(fmt.Sprintf("UpdatedUser_%s", tt.title), func(t *testing.T) {
+			err := userRepo.UpdatedUser(context.Background(), tt.id, &userUpdate)
+			if errors.Is(err, tt.expectErr) {
+				t.Errorf("expected error:%v but got:%v", tt.expectErr, err)
 			}
 		})
 	}
+
 }

@@ -57,7 +57,7 @@ func (u *UserRepository) GetUserByID(ctx context.Context, id int) (*dto.User, er
 	return helper.DbUserToDTO(dbUser), nil
 }
 
-func (u *UserRepository) UpdatedUser(ctx context.Context, id int, c *dto.User) error {
+func (u *UserRepository) UpdatedUser(ctx context.Context, id int, c *dto.UserUpdate) error {
 	_, err := u.DbClient.User.UpdateOneID(id).
 		SetEmail(c.Email).
 		SetPassword(c.Password).
@@ -68,9 +68,6 @@ func (u *UserRepository) UpdatedUser(ctx context.Context, id int, c *dto.User) e
 		SetUpdatedAt(c.UpdateAt).
 		Save(ctx)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			return fmt.Errorf("entadp user / get updated user :%w", ErrorIsNotFound)
-		}
 		return fmt.Errorf("entadp user / updated user :%w", err)
 	}
 

@@ -24,3 +24,13 @@ type User struct {
 	CreateAt    time.Time `json:"create_at"`
 	UpdateAt    time.Time `json:"update_at"`
 }
+
+type UserUpdate struct {
+	FirstName   string    `json:"first_name"`
+	LastName    string    `json:"last_name"`
+	UserName    string    `json:"user_name"`
+	Email       string    `json:"email"`
+	Password    string    `json:"password"`
+	UpdateAt    time.Time `json:"update_at"`
+	PhoneNumber string    `json:"phone_number"`
+}

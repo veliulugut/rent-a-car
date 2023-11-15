@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"rent-a-car/ent/car"
 	"rent-a-car/ent/user"
 	"sync"
 
@@ -73,6 +74,7 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			car.Table:  car.ValidColumn,
 			user.Table: user.ValidColumn,
 		})
 	})

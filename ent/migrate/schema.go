@@ -8,6 +8,23 @@ import (
 )
 
 var (
+	// CarsColumns holds the columns for the "cars" table.
+	CarsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "car_name", Type: field.TypeString},
+		{Name: "miles_per_gallon", Type: field.TypeString},
+		{Name: "cylinders", Type: field.TypeString},
+		{Name: "power", Type: field.TypeString},
+		{Name: "year", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// CarsTable holds the schema information for the "cars" table.
+	CarsTable = &schema.Table{
+		Name:       "cars",
+		Columns:    CarsColumns,
+		PrimaryKey: []*schema.Column{CarsColumns[0]},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -28,6 +45,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CarsTable,
 		UsersTable,
 	}
 )
