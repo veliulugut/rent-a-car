@@ -52,7 +52,7 @@ func TestUserRepository_CreateUser(t *testing.T) {
 			}
 		})
 	}
-
+	
 	t.Run("ContextTimeOut", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*0)
 		defer cancel()
