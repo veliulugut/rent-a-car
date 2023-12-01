@@ -1,6 +1,8 @@
 package bcrypt
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestBcrypt_Generate(t *testing.T) {
 	secret := "31veli31"
@@ -9,6 +11,7 @@ func TestBcrypt_Generate(t *testing.T) {
 	if _, err := bc.Generate("testpass"); err != nil {
 		t.Error(err)
 	}
+
 }
 
 func TestBcrypt_Compare(t *testing.T) {

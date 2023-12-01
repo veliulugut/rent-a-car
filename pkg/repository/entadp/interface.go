@@ -5,6 +5,10 @@ import (
 	"rent-a-car/pkg/repository/dto"
 )
 
+type RepositoryInterface interface {
+	UserRepository()
+}
+
 type UserRepositoryInterface interface {
 	CreateUser(ctx context.Context, c *dto.User) error
 	DeleteUser(ctx context.Context, id int) error

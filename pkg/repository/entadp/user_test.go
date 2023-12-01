@@ -52,7 +52,7 @@ func TestUserRepository_CreateUser(t *testing.T) {
 			}
 		})
 	}
-	
+
 	t.Run("ContextTimeOut", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*0)
 		defer cancel()
@@ -117,8 +117,6 @@ func TestUserRepository_GetUserByID(t *testing.T) {
 					SetEmail("test@mail.com").
 					SetPassword("555 555 555").
 					SetPhoneNumber("555 555 555").
-					SetCreatedAt(time.Now()).
-					SetUpdatedAt(time.Now()).
 					Save(context.Background())
 			},
 			id: 1,

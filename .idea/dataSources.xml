@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:mysql://localhost:3306/rentcar</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="udemy-sql@localhost" uuid="8d042eb5-d64b-457f-846e-999aa7ed4ffe">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/udemy-sql</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
