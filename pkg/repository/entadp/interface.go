@@ -1,3 +1,5 @@
+//go:generate mockgen -destination=user_mocks.go -package=entadp rent-a-car/pkg/repository/entadp UserRepositoryInterface
+//go:generate mockgen -destination=repository_mocks.go -package=entadp rent-a-car/pkg/repository/entadp RepositoryInterface
 package entadp
 
 import (
@@ -6,7 +8,7 @@ import (
 )
 
 type RepositoryInterface interface {
-	UserRepository()
+	User() UserRepository
 }
 
 type UserRepositoryInterface interface {
